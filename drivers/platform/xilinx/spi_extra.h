@@ -107,6 +107,8 @@ extern const struct spi_platform_ops spi_eng_platform_ops;
  */
 extern const struct spi_platform_ops xil_platform_ops;
 
+extern const struct spi_platform_ops xil_spi_reg_ops_pl;
+
 /******************************************************************************/
 /************************ Functions Declarations ******************************/
 /******************************************************************************/
