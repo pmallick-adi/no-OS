@@ -85,3 +85,34 @@ int32_t spi_write_and_read(struct spi_desc *desc,
 {
 	return desc->platform_ops->write_and_read(desc, data, bytes_number);
 }
+
+/**
+ * @brief  Iterate over head list and send all spi messages
+ * @param desc - The SPI descriptor.
+ * @param head - First link of the list with messages to be sent
+ * @return SUCCESS in case of success, negativ error code otherwise.
+ */
+int32_t spi_write_and_read_list(struct spi_desc *desc,
+				struct spi_msg_list *head)
+{
+	int32_t ret;
+
+	if (!desc || !desc->platform_ops)
+		return -EINVAL;
+
+	if (desc->platform_ops->write_and_read_list)
+		return desc->platform_ops->write_and_read_list(desc, head);
+
+	while (head) {
+		if (head->rx_buff != head->tx_buff)
+			return -EINVAL;
+		ret = spi_write_and_read(desc, head->rx_buff,
+					 head->bytes_number);
+		if (IS_ERR_VALUE(ret))
+			return ret;
+
+		head = head->next;
+	}
+
+	return ret;
+}

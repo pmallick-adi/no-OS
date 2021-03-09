@@ -84,6 +84,24 @@ typedef enum spi_bit_order {
 } spi_bit_order;
 
 /**
+ * @struct spi_msg_list
+ * @brief List item describing a SPI transfer
+ */
+struct spi_msg_list {
+	/** Buffer with data to send */
+	uint8_t			*tx_buff;
+	/** Buffer where to store data. If NULL, incoming data won't be saved */
+	uint8_t			*rx_buff;
+	/** Length of buffers. Must have equal size. */
+	uint32_t		bytes_number;
+	/**
+	 * Address of next structure in the list. In the last item this filed
+	 * should be NULL.
+	 */
+	struct spi_msg_list	*next;
+};
+
+/**
  * @struct spi_platform_ops
  * @brief Structure holding SPI function pointers that point to the platform
  * specific function
@@ -140,6 +158,9 @@ struct spi_platform_ops {
 	int32_t (*init)(struct spi_desc **, const struct spi_init_param *);
 	/** SPI write/read function pointer */
 	int32_t (*write_and_read)(struct spi_desc *, uint8_t *, uint16_t);
+	/** Iterate over head list and send all spi messages */
+	int32_t (*write_and_read_list)(struct spi_desc *,
+					   struct spi_msg_list *);
 	/** SPI remove function pointer */
 	int32_t (*remove)(struct spi_desc *);
 };
@@ -159,5 +180,10 @@ int32_t spi_remove(struct spi_desc *desc);
 int32_t spi_write_and_read(struct spi_desc *desc,
 			   uint8_t *data,
 			   uint16_t bytes_number);
+
+/* Iterate over head list and send all spi messages. */
+int32_t spi_write_and_read_list(struct spi_desc *desc,
+				struct spi_msg_list *head);
+
 
 #endif // SPI_H_
