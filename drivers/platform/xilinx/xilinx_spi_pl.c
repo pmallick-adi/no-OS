@@ -77,6 +77,15 @@ struct xspi_desc {
 	uint32_t fifo_depth;
 };
 
+
+/* Structure used to iterate over SPI messages */
+struct msg_iterator {
+	struct spi_msg_list	*msg;
+	uint32_t		i;
+	uint8_t			*buff;
+	uint8_t			is_write;
+};
+
 /******************************************************************************/
 /************************ Functions Definitions *******************************/
 /******************************************************************************/
@@ -326,10 +335,81 @@ static int32_t xil_spi_write_and_read_pl(struct spi_desc *desc, uint8_t *data,
 	return SUCCESS;
 }
 
+/* Read/write FIFOs to/from buffers and update it structure accordingly */
+static void inline _transfer_and_update(struct xspi_desc *xdesc,
+					struct msg_iterator *it)
+{
+	uint32_t		i;
+	uint32_t		len;
+
+	do {
+		len = it->msg->bytes_number - it->i;
+		if (it->is_write)
+			i = _wr_fifo(xdesc, it->buff + it->i, len);
+		else if (it->buff)
+			i = _rd_fifo(xdesc, it->buff + it->i, len);
+		else
+			/* Upper layer don't provided a read buffer */
+			i = _rd_fifo(xdesc, NULL, len);
+
+		it->i += i;
+		/* If current msg have been sent/read go to next one */
+		if (it->i == it->msg->bytes_number) {
+			it->msg = it->msg->next;
+			it->i = 0;
+			if (it->is_write)
+				it->buff = it->msg->tx_buff;
+			else
+				it->buff = it->msg->rx_buff;
+		}
+	} while (i == len && it->msg); /* Until FIFO is full or empty */
+}
+
+/* SPI polled transfer of multiple messages */
+static int32_t xil_spi_write_and_read_list_pl(struct spi_desc *desc,
+				struct spi_msg_list *head)
+{
+	struct xspi_desc	*xdesc;
+	struct msg_iterator	rx;
+	struct msg_iterator	tx;
+
+	if (!desc || !desc->extra)
+		return -EINVAL;
+
+	xdesc = desc->extra;
+	_update_mode(desc);
+
+	/* Initialize rx and tx structures */
+	rx.msg = head;
+	rx.buff = head->rx_buff;
+	rx.i = 0;
+	rx.is_write = 0;
+
+	tx.msg = head;
+	tx.buff = head->tx_buff;
+	tx.i = 0;
+	tx.is_write = 1;
+
+	xil_spi_cs_assert(desc, 1);
+	_xil_spi_start_transfer(xdesc, 1);
+
+	while (rx.msg) {
+		if (tx.msg)
+			_transfer_and_update(xdesc, &tx);
+		_transfer_and_update(xdesc, &rx);
+	}
+
+	_xil_spi_start_transfer(xdesc, 0);
+	xil_spi_cs_assert(desc, 0);
+
+	return SUCCESS;
+}
+
 const struct spi_platform_ops xil_spi_reg_ops_pl = {
 	.init = xil_spi_init_pl,
 	.remove = xil_spi_remove_pl,
-	.write_and_read = xil_spi_write_and_read_pl
+	.write_and_read = xil_spi_write_and_read_pl,
+	.write_and_read_list = xil_spi_write_and_read_list_pl
 };
 
 #endif // XPAR_XSPI_NUM_INSTANCES
