@@ -99,13 +99,8 @@ SRCS += $(NO-OS)/iio/iio_demo/demo_dev.c	\
 		$(NO-OS)/iio/iio_app/iio_app.c
 SRCS	 += $(NO-OS)/util/circular_buffer.c
 
-#SRCS += $(PLATFORM_DRIVERS)/linux_uart.c \
-		$(PLATFORM_DRIVERS)/linux_gpio.c
-
 SRCS += $(DRIVERS)/platform/generic/uart.c \
 		$(DRIVERS)/platform/generic/delay.c
-#INCS += $(PLATFORM_DRIVERS)/linux_uart.h \
-		$(PLATFORM_DRIVERS)/linux_gpio.h
 
 INCS += $(NO-OS)/network/tcp_socket.h \
 		$(NO-OS)/network/network_interface.h \

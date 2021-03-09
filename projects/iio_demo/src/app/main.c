@@ -68,7 +68,7 @@
 
 #include "error.h"
 
-#if defined(ADUCM_PLATFORM) || defined(STM32_PLATFORM)
+#if defined(ADUCM_PLATFORM) || defined(STM32_PLATFORM) || defined(LINUX_PLATFORM)
 
 #define MAX_SIZE_BASE_ADDR	(NB_LOCAL_SAMPLES * DEMO_NUM_CHANNELS *\
 					sizeof(uint16_t))
