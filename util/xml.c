@@ -43,6 +43,7 @@
 
 #include <string.h>
 #include <stdlib.h>
+#include <stdint.h>
 #include "xml.h"
 #include "error.h"
 
